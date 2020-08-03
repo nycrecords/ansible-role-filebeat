@@ -3,26 +3,33 @@
   hosts: all
   become: true
 
-  pre_tasks:
-    - name: Update apt cache.
-      apt: update_cache=true cache_valid_time=600
-      when: ansible_os_family == 'Debian'
+  vars:
+    # Role: rhsm
+    rhsm_username: "{{ lookup('env', 'RHSM_USERNAME') }}"
+    rhsm_password: "{{ lookup('env', 'RHSM_PASSWORD') }}"
+    rhsm_auto_attach: true
+    rhsm_server_proxy_hostname: "{{ lookup('env', 'http_proxy_hostname') }}"
+    rhsm_server_proxy_port: "{{ lookup('env', 'http_proxy_port') }}"
+    rhsm_server_proxy_user: "{{ lookup('env', 'http_proxy_user') }}"
+    rhsm_server_proxy_password: "{{ lookup('env', 'http_proxy_password') }}"
+    rhsm_consumer_name: "nycrecords_{{ '%Y%m%d_%H%M%s' | strftime(ansible_date_time.epoch) }}"
 
-    - name: Install test dependencies (RedHat).
-      package: name=which state=present
-      when: ansible_os_family == 'RedHat'
+    # Role: java
+    java_home: /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.262.b10-0.el7_8.x86_64/jre/bin/java
 
-    - name: Install test dependencies.
-      package: name=curl state=present
+    # Role: ElasticSearch
+    elasticsearch_heap_size_min: 128m
+    elasticsearch_heap_size_max: 128m
+    elasticsearch_discovery_type: single-node
+    xpack_transport_ssl_enabled: false
+    xpack_http_ssl_enabled: false
 
-    - name: Set the java_packages variable (Ubuntu).
-      set_fact:
-        java_packages:
-          - openjdk-8-jdk
-      when: ansible_distribution == 'Ubuntu'
+    # Role: LogStash
+    logstash_enabled_on_boot: true
 
   roles:
-    - role: geerlingguy.java
-    - role: geerlingguy.elasticsearch
-    - role: geerlingguy.logstash
-    - role: geerlingguy.filebeat
+    - role: nycrecords.rhsm
+    - role: nycrecords.java
+    - role: nycrecords.elasticsearch
+    - role: nycrecords.logstash
+    - role: ansible-role-filebeat
