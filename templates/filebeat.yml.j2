@@ -92,7 +92,10 @@ output:
   ### Logstash as output
   logstash:
     # The Logstash hosts
-    hosts: {{ filebeat_output_logstash_hosts | to_json }}
+    hosts:
+    {% for item in filebeat_output_logstash_hosts %}
+      - {{ item + ":" + filebeat_output_logstash_port | string }}
+    {% endfor %}
 
     # Number of workers per Logstash host.
     #worker: 1
